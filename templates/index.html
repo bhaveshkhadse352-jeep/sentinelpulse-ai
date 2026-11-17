@@ -1,0 +1,141 @@
+# ==============================
+# templates/index.html
+# ==============================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SentinelPulse AI – AI‑SOC Dashboard</title>
+    <!-- Tailwind CSS via CDN (dark mode) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Enable dark mode class globally
+        tailwind.config = {
+            darkMode: 'class',
+        };
+    </script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+    <!-- Our custom JS -->
+    <script defer src="/static/main.js"></script>
+    <style>
+        /* Simple scroll‑bars for tables */
+        .table-scroll {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+    <!-- === SECTION 1: HEADER === -->
+    <header class="p-4 bg-slate-800 flex justify-between items-center">
+        <h1 class="text-2xl font-bold">SentinelPulse AI</h1>
+        <button id="themeToggle" class="px-3 py-1 bg-emerald-600 rounded">Toggle Light/Dark</button>
+    </header>
+
+    <main class="flex-1 p-4 grid grid-cols-12 gap-4">
+        <!-- === SECTION 2: KPI CARDS === -->
+        <section class="col-span-12 md:col-span-12 lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-slate-800 p-4 rounded shadow" id="card-total-logs">
+                <h2 class="text-lg font-medium">Total Logs Analyzed</h2>
+                <p class="text-3xl font-bold" id="kpi-total-logs">0</p>
+            </div>
+            <div class="bg-slate-800 p-4 rounded shadow" id="card-active-critical">
+                <h2 class="text-lg font-medium">Active Critical Alerts</h2>
+                <p class="text-3xl font-bold" id="kpi-active-critical">0</p>
+            </div>
+            <div class="bg-slate-800 p-4 rounded shadow" id="card-mitigated">
+                <h2 class="text-lg font-medium">Mitigated Threats</h2>
+                <p class="text-3xl font-bold" id="kpi-mitigated">0</p>
+            </div>
+            <div class="bg-slate-800 p-4 rounded shadow" id="card-health-score">
+                <h2 class="text-lg font-medium">Security Health Score</h2>
+                <p class="text-3xl font-bold" id="kpi-health-score">0%</p>
+            </div>
+        </section>
+
+        <!-- === SECTION 3: CHARTS === -->
+        <section class="col-span-12 lg:col-span-8 grid grid-cols-1 gap-4">
+            <div class="bg-slate-800 p-4 rounded shadow">
+                <h2 class="text-lg font-medium mb-2">Traffic vs Threat Spikes</h2>
+                <canvas id="lineChart"></canvas>
+            </div>
+            <div class="bg-slate-800 p-4 rounded shadow">
+                <h2 class="text-lg font-medium mb-2">Attack Type Distribution</h2>
+                <canvas id="doughnutChart"></canvas>
+            </div>
+        </section>
+
+        <!-- === SECTION 4: ATTACK SIMULATOR === -->
+        <section class="col-span-12 lg:col-span-4 bg-slate-800 p-4 rounded shadow">
+            <h2 class="text-lg font-medium mb-2">Live Attack Simulator</h2>
+            <div class="flex flex-col space-y-2">
+                <button class="sim-btn bg-red-600 hover:bg-red-500 text-white py-2 rounded" data-type="Brute Force">Simulate Brute Force</button>
+                <button class="sim-btn bg-orange-600 hover:bg-orange-500 text-white py-2 rounded" data-type="SQL Injection">Simulate SQL Injection</button>
+                <button class="sim-btn bg-purple-600 hover:bg-purple-500 text-white py-2 rounded" data-type="DDoS">Simulate DDoS Attack</button>
+            </div>
+        </section>
+
+        <!-- === SECTION 5: THREAT FEED TABLE & FILTERS === -->
+        <section class="col-span-12 bg-slate-800 p-4 rounded shadow">
+            <h2 class="text-lg font-medium mb-2">Live Threat Feed</h2>
+            <div class="flex flex-wrap gap-4 mb-2">
+                <select id="severityFilter" class="bg-slate-700 text-white py-1 px-2 rounded">
+                    <option value="All">All Severities</option>
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+                <input type="text" id="searchBox" placeholder="Search IP or Attack" class="bg-slate-700 text-white py-1 px-2 rounded flex-1" />
+                <button id="exportBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white py-1 px-3 rounded">Download Report</button>
+            </div>
+            <div class="table-scroll">
+                <table class="w-full table-auto">
+                    <thead class="bg-slate-700">
+                        <tr>
+                            <th class="p-2">Time</th>
+                            <th class="p-2">Source IP</th>
+                            <th class="p-2">Attack Type</th>
+                            <th class="p-2">MITRE ID</th>
+                            <th class="p-2">Severity</th>
+                            <th class="p-2">Status</th>
+                            <th class="p-2">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="threatTableBody" class="bg-slate-800"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- === SECTION 6: AI SOC COPILOT PANEL === -->
+        <section class="col-span-12 lg:col-span-4 bg-slate-800 p-4 rounded shadow flex flex-col">
+            <h2 class="text-lg font-medium mb-2">AI SOC Copilot</h2>
+            <div class="flex flex-wrap gap-2 mb-2">
+                <button class="quick-btn bg-cyan-600 hover:bg-cyan-500 text-white py-1 px-2 rounded" data-q="critical">Show critical threats</button>
+                <button class="quick-btn bg-cyan-600 hover:bg-cyan-500 text-white py-1 px-2 rounded" data-q="dangerous_ip">Which IP is most dangerous?</button>
+                <button class="quick-btn bg-cyan-600 hover:bg-cyan-500 text-white py-1 px-2 rounded" data-q="suggestion">Suggest mitigation steps</button>
+            </div>
+            <div class="flex flex-1 flex-col">
+                <div id="chatLog" class="flex-1 overflow-y-auto p-2 bg-slate-900 rounded mb-2" style="max-height:250px;"></div>
+                <input type="text" id="chatInput" placeholder="Ask the copilot..." class="bg-slate-700 text-white py-1 px-2 rounded" />
+                <button id="sendChat" class="mt-2 bg-emerald-600 hover:bg-emerald-500 text-white py-1 px-3 rounded">Send</button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="p-4 bg-slate-800 text-center text-sm">
+        <p>SentinelPulse AI – Lightweight AI‑SOC Dashboard • Run with <code>python app.py</code></p>
+    </footer>
+
+    <script>
+        // Initialise Lucide icons after DOM load
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
